@@ -10,9 +10,8 @@ export const ProfileCreation = (): JSX.Element => {
   const handleCreateProfile = useCallback(async () => {
     if (!name) return toast.error('Profile name is required')
 
-    const profile = window.app.profiles.initProfile(name)
+    const profile = await window.profiles.createProfile({ name })
     removeTab(selectedTab)
-
     addTab({ type: TabType.DATABASE_PROFILE, profileId: profile.id })
   }, [name])
 

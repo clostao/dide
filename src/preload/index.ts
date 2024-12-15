@@ -1,8 +1,15 @@
 import { contextBridge } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { pgService } from '../backend/services/pg'
-import { appService } from '../backend/services/app'
+import { services } from '../backend/services/pull'
 import { state } from '../backend/services/state'
+import { profiles } from '../backend/services/pull/profiles'
+import {
+  createNamespacedIpcHandlers,
+  createNamespaceWindowObject,
+  registerRendererIPCHandler
+} from '../common/utils/ipcHandler'
+
 // Custom APIs for renderer
 const api = {
   log: <T>(message: T): T => message
@@ -16,8 +23,11 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
     contextBridge.exposeInMainWorld('pg', pgService)
-    contextBridge.exposeInMainWorld('app', appService)
+    contextBridge.exposeInMainWorld('app', services)
     contextBridge.exposeInMainWorld('state', state)
+
+    const handlers = createNamespacedIpcHandlers('profiles', profiles)
+    contextBridge.exposeInMainWorld('profiles', createNamespaceWindowObject(handlers))
   } catch (error) {
     console.error(error)
   }

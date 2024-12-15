@@ -1,9 +1,11 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import logger from 'electron-log/main'
 import { getProfileState, useProfilesStore } from '../common/state/profiles'
+import { profiles } from '../backend/services/pull/profiles'
+import { createNamespacedIpcHandlers, registerMainIpcHandler } from '../common/utils/ipcHandler'
 
 logger.initialize()
 
@@ -30,14 +32,18 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+  useProfilesStore.subscribe((state) => {
+    mainWindow.webContents.send('stateUpdate', {
+      name: 'profiles',
+      state: getProfileState(state)
+    })
   })
 
-  ipcMain.on('stateUpdate', (_, args) => {
-    if (args.name === 'profiles') {
-      useProfilesStore.setState(args.state)
-    }
+  createNamespacedIpcHandlers('profiles', profiles).forEach((handler) =>
+    registerMainIpcHandler(handler, mainWindow.webContents.send.bind(mainWindow.webContents))
+  )
+  mainWindow.on('ready-to-show', () => {
+    mainWindow.show()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

@@ -1,5 +1,4 @@
 import { ProfileCreation } from '../views/ProfileCreation'
-import { ConnectionView } from '../views/ConnectionView'
 import { TabType, useTabsStore } from '../state/tabs'
 import { exhaustiveCheck } from '../../../common/utils/exhaustiveCheck'
 import { ProfileView } from '../views/ProfileView'
