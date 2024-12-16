@@ -5,7 +5,8 @@ import icon from '../../resources/icon.png?asset'
 import logger from 'electron-log/main'
 import { getProfileState, useProfilesStore } from '../common/state/profiles'
 import { profiles } from '../backend/services/pull/profiles'
-import { createNamespacedIpcHandlers, registerMainIpcHandler } from '../common/utils/ipcHandler'
+import { createNamespacedIpcHandlers, registerMainIpcHandler } from '../common/utils/ipc/pull'
+import { ipcPushServices } from '../backend/services/push'
 
 logger.initialize()
 
@@ -50,6 +51,17 @@ function createWindow(): void {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
+
+  setInterval(async () => {
+    const num = await ipcPushServices.main.timer.tick(
+      mainWindow.webContents.send.bind(mainWindow.webContents),
+      {
+        time: Date.now()
+      }
+    )
+
+    logger.info('num', num)
+  }, 1000)
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.

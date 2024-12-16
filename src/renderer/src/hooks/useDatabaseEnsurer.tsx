@@ -6,13 +6,15 @@ export const ProfileUpdater = (): React.ReactNode => {
   const setState = useProfilesStore((state) => state.setState)
 
   useEffect(() => {
-    const { unsubscribe } = window.state.onStateChange((_, newState) => {
-      logger.info('stateUpdate', newState)
-      setState(newState)
+    window.pushServices.timer.on_tick(({ time }) => {
+      const random = Math.random()
+      logger.info('timer tick', time, random)
+
+      return random
     })
 
     return () => {
-      unsubscribe()
+      // unsubscribe()
     }
   }, [])
 

@@ -1,24 +1,12 @@
 import { ipcMain, ipcRenderer } from 'electron'
 import { v4 } from 'uuid'
 import logger from 'electron-log/main'
+import { createMessage, IpcMainSender, MessageWithId, responseEventId } from './common'
+
 export interface IPCHandler<T, O> {
   eventName: string
   callback: (args: T) => O
 }
-
-type MessageWithId<T> = {
-  id: string
-  message: T
-}
-
-const createResponseMessage = <T>(id: string, message: T) => {
-  return {
-    id,
-    message
-  }
-}
-
-const responseEventId = (eventName: string) => `${eventName}:response`
 
 export const createIpcHandler = <T, O>(
   eventName: string,
@@ -36,13 +24,13 @@ export const createIpcHandler = <T, O>(
 
 export const registerMainIpcHandler = <T, O>(
   handler: IPCHandler<T, O>,
-  sender: (eventName: string, args: MessageWithId<O>) => void
+  sender: IpcMainSender<O>
 ) => {
   logger.info('registerMainIpcHandler', handler.eventName)
 
   ipcMain.on(handler.eventName, (_, args: MessageWithId<T>) => {
     logger.info('registerMainIpcHandler', handler.eventName, args)
-    const response = createResponseMessage(args.id, handler.callback(args.message))
+    const response = createMessage(args.id, handler.callback(args.message))
     sender(responseEventId(handler.eventName), response)
   })
 }
@@ -50,11 +38,11 @@ export const registerMainIpcHandler = <T, O>(
 export const registerRendererIPCHandler = <T, O>(handler: IPCHandler<T, O>) => {
   return (args: T) =>
     new Promise((resolve) => {
-      const id = v4()
+      const sendingMessage = createMessage(v4(), args)
 
       const responseEventName = responseEventId(handler.eventName)
       const cb = (_, args: MessageWithId<O>) => {
-        if (args.id === id) {
+        if (args.id === sendingMessage.id) {
           resolve(args.message)
           ipcRenderer.removeListener(responseEventName, cb)
         }
@@ -62,10 +50,7 @@ export const registerRendererIPCHandler = <T, O>(handler: IPCHandler<T, O>) => {
       ipcRenderer.on(responseEventName, cb)
 
       logger.info('sending message from renderer', handler.eventName, args)
-      ipcRenderer.send(handler.eventName, {
-        id,
-        message: args
-      })
+      ipcRenderer.send(handler.eventName, sendingMessage)
     })
 }
 

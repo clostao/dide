@@ -4,11 +4,9 @@ import { pgService } from '../backend/services/pg'
 import { services } from '../backend/services/pull'
 import { state } from '../backend/services/state'
 import { profiles } from '../backend/services/pull/profiles'
-import {
-  createNamespacedIpcHandlers,
-  createNamespaceWindowObject,
-  registerRendererIPCHandler
-} from '../common/utils/ipcHandler'
+import { createNamespacedIpcHandlers, createNamespaceWindowObject } from '../common/utils/ipc/pull'
+import { exposePushIpcServicesPreload } from '../common/utils/ipc/push'
+import { ipcPushServices } from '../backend/services/push'
 
 // Custom APIs for renderer
 const api = {
@@ -28,6 +26,8 @@ if (process.contextIsolated) {
 
     const handlers = createNamespacedIpcHandlers('profiles', profiles)
     contextBridge.exposeInMainWorld('profiles', createNamespaceWindowObject(handlers))
+
+    exposePushIpcServicesPreload(ipcPushServices)
   } catch (error) {
     console.error(error)
   }

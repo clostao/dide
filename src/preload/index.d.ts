@@ -2,9 +2,8 @@ import { ElectronAPI } from '@electron-toolkit/preload'
 import { pgService } from '../backend/services/pg'
 import { services } from '../backend/services/pull'
 import { state } from '../backend/services/state'
+import { ipcPushServices } from '../backend/services/push'
 import { Handlers } from 'zutron'
-
-type Promisified<T> = T extends Promise<U> ? T : Promise<T>
 
 type RecordPromisified<T> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,5 +20,6 @@ declare global {
     zutron: Handlers
     state: typeof state
     profiles: RecordPromisified<typeof services.profiles>
+    pushServices: (typeof ipcPushServices)['renderer']
   }
 }
